@@ -1,8 +1,8 @@
 diff --git a/Online/plugin.js b/Online/plugin.js
-index fc5ce91..791d3fd 100644
+index fc5ce91..1c3c800 100644
 --- a/Online/plugin.js
 +++ b/Online/plugin.js
-@@ -758,6 +758,32 @@
+@@ -758,6 +758,45 @@
          }
        }
      };
@@ -32,10 +32,23 @@ index fc5ce91..791d3fd 100644
 +        done
 +      );
 +    };
++    this.loadPlaylistSegments = function (videos, playlist) {
++      // метки для остальных серий плейлиста: по одной, в фоне, чтобы не задерживать старт; playlist[i] соответствует videos[i]
++      var _this = this;
++      var i = 0;
++      (function next() {
++        if (i >= videos.length) return;
++        var idx = i++;
++        _this.loadSegments(videos[idx], function () {
++          if (playlist[idx] && videos[idx].segments) playlist[idx].segments = videos[idx].segments;
++          next();
++        });
++      })();
++    };
      this.display = function (videos) {
        var _this5 = this;
        if (videos.length > 1 && videos.every(function (video) {
-@@ -769,6 +795,7 @@
+@@ -769,6 +808,7 @@
        }
        this.draw(videos, {
          onEnter: function onEnter(item, html) {
@@ -43,7 +56,15 @@ index fc5ce91..791d3fd 100644
            _this5.getFileUrl(
              item,
              function (json, json_call) {
-@@ -854,6 +881,7 @@
+@@ -844,6 +884,7 @@
+                   {player-inner}
+                   Lampa.Player.play(element);
+                   Lampa.Player.playlist(playlist);
++                  if (item.season) _this5.loadPlaylistSegments(videos, playlist);
+                   if (element.subtitles_call) _this5.loadSubtitles(element.subtitles_call);
+                   item.mark();
+                   _this5.updateBalanser(balanser);
+@@ -854,6 +895,7 @@
              },
              true
            );
