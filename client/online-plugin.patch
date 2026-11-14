@@ -1,16 +1,18 @@
 diff --git a/Online/plugin.js b/Online/plugin.js
-index fc5ce91..1c3c800 100644
+index fc5ce91..9665b71 100644
 --- a/Online/plugin.js
 +++ b/Online/plugin.js
-@@ -758,6 +758,45 @@
+@@ -758,6 +758,47 @@
          }
        }
      };
 +    this.loadSegments = function (item, done) {
-+      // метки AniSkip для аниме (ja + жанр «Анимация»); у провайдера свои метки приоритетнее (json_call.segments)
++      // метки AniSkip для аниме: жанр «Анимация» и страна производства JP/CN/KR; у провайдера свои метки приоритетнее (json_call.segments)
 +      var m = object.movie || {};
-+      if (item.segments || !item.season || !item.episode || m.original_language !== 'ja' || !(m.genres || []).some(function (g) {
++      if (item.segments || !item.season || !item.episode || !(m.genres || []).some(function (g) {
 +        return g.id == 16;
++      }) || !(m.origin_country || []).some(function (c) {
++        return ['JP', 'CN', 'KR'].indexOf(c) !== -1;
 +      })) return done();
 +      var year = (m.first_air_date || '').slice(0, 4);
 +      if (item.season > 1) {
@@ -48,7 +50,7 @@ index fc5ce91..1c3c800 100644
      this.display = function (videos) {
        var _this5 = this;
        if (videos.length > 1 && videos.every(function (video) {
-@@ -769,6 +808,7 @@
+@@ -769,6 +810,7 @@
        }
        this.draw(videos, {
          onEnter: function onEnter(item, html) {
@@ -56,7 +58,7 @@ index fc5ce91..1c3c800 100644
            _this5.getFileUrl(
              item,
              function (json, json_call) {
-@@ -844,6 +884,7 @@
+@@ -844,6 +886,7 @@
                    {player-inner}
                    Lampa.Player.play(element);
                    Lampa.Player.playlist(playlist);
@@ -64,7 +66,7 @@ index fc5ce91..1c3c800 100644
                    if (element.subtitles_call) _this5.loadSubtitles(element.subtitles_call);
                    item.mark();
                    _this5.updateBalanser(balanser);
-@@ -854,6 +895,7 @@
+@@ -854,6 +897,7 @@
              },
              true
            );
