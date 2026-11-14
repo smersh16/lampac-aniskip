@@ -1,2 +1,34 @@
 # lampac-aniskip
-lampac-aniskip
+
+Метки заставки, титров и рекапа из [AniSkip](https://api.aniskip.com) для любого онлайн-провайдера [lampac-nextgen](https://github.com/lampac-nextgen/lampac). Ответ в формате `SegmentTpl` (`{"ad":[],"skip":[{"start","end"}]}`), его уже понимает Lampa у Kodik, Aladin и Alloha.
+
+## HTTP
+
+| Маршрут | Параметры | Описание |
+|---------|-----------|----------|
+| `GET /aniskip` | `title`, `year`, `e` (номер серии) | MAL ID берётся через поиск Shikimori (`shikimori.io`, id Shikimori == MAL id). |
+| `GET /aniskip` | `mal_id`, `e` | То же без поиска, для отладки. |
+
+Ответ `{}` значит «меток нет» (кэш 12 часов). Сбой сети даёт `503` и не кэшируется. Настроек в `init.conf` нет.
+
+## Установка
+
+Сервер: запись в `module/repository.yaml` (модуль скачается при старте lampac):
+
+```yaml
+- repository: https://github.com/smersh16/lampac-aniskip
+  branch: main
+  modules:
+    - AniSkip
+  token: env:GITHUB_PAT
+```
+
+Клиент: `client/online-plugin.patch` добавляет в `Online/plugin.js` метод `loadSegments`: перед воспроизведением он запрашивает метки, если карточка японская анимация (`original_language = ja`, жанр «Анимация»), сезон 1 и у провайдера нет своих меток.
+
+## Ограничения
+
+- Только 1 сезон: у AniSkip нумерация серий внутри записи MAL, пересчёта TMDB-сезонов нет.
+- Метки приходят от разных рипов (`episodeLength=0`), возможен сдвиг на секунды.
+- Метки получает только текущая серия, не плейлист.
+- Поиск по названию нечёткий; при неверном совпадении отладьте через `mal_id`.
+- Код не собирался в CI, проверка сборки только на сервере.
