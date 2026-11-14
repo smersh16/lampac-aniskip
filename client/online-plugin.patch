@@ -1,21 +1,30 @@
 diff --git a/Online/plugin.js b/Online/plugin.js
-index fc5ce91..9f7b3c2 100644
+index fc5ce91..791d3fd 100644
 --- a/Online/plugin.js
 +++ b/Online/plugin.js
-@@ -758,6 +758,23 @@
+@@ -758,6 +758,32 @@
          }
        }
      };
 +    this.loadSegments = function (item, done) {
-+      // метки AniSkip для аниме (ja + жанр «Анимация»), только 1 сезон; у провайдера свои метки приоритетнее (json_call.segments)
++      // метки AniSkip для аниме (ja + жанр «Анимация»); у провайдера свои метки приоритетнее (json_call.segments)
 +      var m = object.movie || {};
-+      if (item.segments || item.season != 1 || !item.episode || m.original_language !== 'ja' || !(m.genres || []).some(function (g) {
++      if (item.segments || !item.season || !item.episode || m.original_language !== 'ja' || !(m.genres || []).some(function (g) {
 +        return g.id == 16;
 +      })) return done();
++      var year = (m.first_air_date || '').slice(0, 4);
++      if (item.season > 1) {
++        // сезон 2+: отдельная запись MAL, сервер выбирает её по году выхода этого сезона
++        var sn = (m.seasons || []).filter(function (s) {
++          return s.season_number == item.season;
++        })[0];
++        if (!sn || !sn.air_date) return done();
++        year = sn.air_date.slice(0, 4);
++      }
 +      var net = new Lampa.Reguest();
 +      net.timeout(4000);
 +      net.silent(
-+        account(Defined.localhost + 'aniskip?e=' + item.episode + '&year=' + ((m.first_air_date || '').slice(0, 4) || 0) + '&title=' + encodeURIComponent(m.name || m.title || '')),
++        account(Defined.localhost + 'aniskip?e=' + item.episode + '&year=' + (year || 0) + '&title=' + encodeURIComponent(m.name || m.title || '')),
 +        function (json) {
 +          if (json && json.skip && json.skip.length) item.segments = json;
 +          done();
@@ -26,7 +35,7 @@ index fc5ce91..9f7b3c2 100644
      this.display = function (videos) {
        var _this5 = this;
        if (videos.length > 1 && videos.every(function (video) {
-@@ -769,6 +786,7 @@
+@@ -769,6 +795,7 @@
        }
        this.draw(videos, {
          onEnter: function onEnter(item, html) {
@@ -34,7 +43,7 @@ index fc5ce91..9f7b3c2 100644
            _this5.getFileUrl(
              item,
              function (json, json_call) {
-@@ -854,6 +872,7 @@
+@@ -854,6 +881,7 @@
              },
              true
            );
