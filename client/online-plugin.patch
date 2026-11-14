@@ -1,32 +1,37 @@
 diff --git a/Online/plugin.js b/Online/plugin.js
-index fc5ce91..9665b71 100644
+index fc5ce91..c8752c6 100644
 --- a/Online/plugin.js
 +++ b/Online/plugin.js
-@@ -758,6 +758,47 @@
+@@ -758,6 +758,52 @@
          }
        }
      };
 +    this.loadSegments = function (item, done) {
-+      // метки AniSkip для аниме: жанр «Анимация» и страна производства JP/CN/KR; у провайдера свои метки приоритетнее (json_call.segments)
++      // метки пропуска: аниме (жанр «Анимация», страна JP/CN/KR) через AniSkip по названию, сериалы TMDB через TheIntroDB по tmdb_id; у провайдера свои метки приоритетнее (json_call.segments)
 +      var m = object.movie || {};
-+      if (item.segments || !item.season || !item.episode || !(m.genres || []).some(function (g) {
++      if (item.segments || !item.season || !item.episode) return done();
++      var anime = (m.genres || []).some(function (g) {
 +        return g.id == 16;
-+      }) || !(m.origin_country || []).some(function (c) {
++      }) && (m.origin_country || []).some(function (c) {
 +        return ['JP', 'CN', 'KR'].indexOf(c) !== -1;
-+      })) return done();
++      });
++      var tmdb = m.tmdb_id || ((m.source || 'tmdb') == 'tmdb' ? m.id : 0);
 +      var year = (m.first_air_date || '').slice(0, 4);
-+      if (item.season > 1) {
++      if (anime && item.season > 1) {
 +        // сезон 2+: отдельная запись MAL, сервер выбирает её по году выхода этого сезона
 +        var sn = (m.seasons || []).filter(function (s) {
 +          return s.season_number == item.season;
 +        })[0];
-+        if (!sn || !sn.air_date) return done();
-+        year = sn.air_date.slice(0, 4);
++        if (sn && sn.air_date) year = sn.air_date.slice(0, 4);
++        else anime = false;
 +      }
++      if (!anime && !tmdb) return done();
 +      var net = new Lampa.Reguest();
 +      net.timeout(4000);
 +      net.silent(
-+        account(Defined.localhost + 'aniskip?e=' + item.episode + '&year=' + (year || 0) + '&title=' + encodeURIComponent(m.name || m.title || '')),
++        account(
++          Defined.localhost + 'aniskip?e=' + item.episode + '&s=' + item.season + (tmdb ? '&tmdb_id=' + tmdb : '') + (anime ? '&year=' + (year || 0) + '&title=' + encodeURIComponent(m.name || m.title || '') : '')
++        ),
 +        function (json) {
 +          if (json && json.skip && json.skip.length) item.segments = json;
 +          done();
@@ -50,7 +55,7 @@ index fc5ce91..9665b71 100644
      this.display = function (videos) {
        var _this5 = this;
        if (videos.length > 1 && videos.every(function (video) {
-@@ -769,6 +810,7 @@
+@@ -769,6 +815,7 @@
        }
        this.draw(videos, {
          onEnter: function onEnter(item, html) {
@@ -58,7 +63,7 @@ index fc5ce91..9665b71 100644
            _this5.getFileUrl(
              item,
              function (json, json_call) {
-@@ -844,6 +886,7 @@
+@@ -844,6 +891,7 @@
                    {player-inner}
                    Lampa.Player.play(element);
                    Lampa.Player.playlist(playlist);
@@ -66,7 +71,7 @@ index fc5ce91..9665b71 100644
                    if (element.subtitles_call) _this5.loadSubtitles(element.subtitles_call);
                    item.mark();
                    _this5.updateBalanser(balanser);
-@@ -854,6 +897,7 @@
+@@ -854,6 +902,7 @@
              },
              true
            );
