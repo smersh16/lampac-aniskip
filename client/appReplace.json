@@ -1,0 +1,6 @@
+{
+  "appReplace": {
+    "(this\\.display = function \\(videos\\) \\{)([\\s\\S]*?onEnter: function onEnter\\(item, html\\) \\{)(\\s*_this5\\.getFileUrl\\([\\s\\S]*?\\btrue\\s*\\);)(\\s*\\},\\s*onContextMenu: function onContextMenu)": "file:module/lampac-aniskip/AniSkip/client/online-a.js",
+    "(Lampa\\.Player\\.playlist\\(playlist\\);)": "file:module/lampac-aniskip/AniSkip/client/online-b.js"
+  }
+}
